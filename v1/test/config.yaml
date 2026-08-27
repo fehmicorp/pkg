@@ -11,6 +11,5 @@ http:
 redis:
   host: localhost
   port: 6379
-  user: redis
-  password: newpassword
+  password: YourSecurePassword
   db: 0

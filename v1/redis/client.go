@@ -44,3 +44,23 @@ func NewClient(
 		Client: rdb,
 	}, nil
 }
+
+// Ping checks the connection status to the Redis server.
+func (c *Client) Ping(ctx context.Context) *goredis.StatusCmd {
+	return c.Client.Ping(ctx)
+}
+
+// Set writes a key-value pair with an expiration duration.
+func (c *Client) Set(ctx context.Context, key string, value interface{}, expiration time.Duration) *goredis.StatusCmd {
+	return c.Client.Set(ctx, key, value, expiration)
+}
+
+// Get fetches the value for a given key.
+func (c *Client) Get(ctx context.Context, key string) *goredis.StringCmd {
+	return c.Client.Get(ctx, key)
+}
+
+// Close gracefully closes the client connection.
+func (c *Client) Close() error {
+	return c.Client.Close()
+}
