@@ -1,7 +1,9 @@
 package gateway
 
+import gwconfig "github.com/fehmicorp/pkg/v1/gateway/config"
+
 func StartServer() {
-	// cfg := gateway_config.Init()
+	cfg := gwconfig.Init()
 
 	// redisClient, err := redis.NewClient(
 	// 	cfg.Redis.Host,
