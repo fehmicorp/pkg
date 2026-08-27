@@ -7,5 +7,5 @@ import (
 
 func main() {
 	config.Load()
-	gateway.StartServer("new")
+	gateway.StartServer()
 }

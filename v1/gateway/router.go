@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -14,10 +15,13 @@ import (
 )
 
 func StartServer(prefixes ...string) {
-	// Pass variadic prefixes directly to NewServer
-	server := httpHandler.NewServer(prefixes...)
-
-	// Extract primary prefix for logging context (if provided)
+	var targetPrefix string
+	if len(prefixes) > 0 && strings.TrimSpace(prefixes[0]) != "" {
+		targetPrefix = prefixes[0]
+	} else {
+		targetPrefix = os.Getenv("PREFIX")
+	}
+	server := httpHandler.NewServer(targetPrefix)
 	var activePrefix string
 	if len(prefixes) > 0 {
 		activePrefix = prefixes[0]
