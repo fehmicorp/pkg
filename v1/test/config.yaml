@@ -1,0 +1,16 @@
+app:
+  name: gateway
+  version: 1.0.0
+  environment: production
+
+http:
+  mode: http
+  host: localhost
+  port: 8050
+
+redis:
+  host: localhost
+  port: 6379
+  user: redis
+  password: newpassword
+  db: 0

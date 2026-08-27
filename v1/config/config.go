@@ -7,11 +7,11 @@ import (
 )
 
 type Config struct {
-	App     gateway.Config   `yaml:"app"`
-	Server  http.Config      `yaml:"server"`
-	Redis   redis.Config     `yaml:"redis"`
-	Monitor MonitoringConfig `yaml:"monitor"`
-	Logging LoggingConfig    `yaml:"logging"`
+	App    gateway.Config `yaml:"app"`
+	Server http.Config    `yaml:"server"`
+	Redis  redis.Config   `yaml:"redis"`
+	// Monitor MonitoringConfig `yaml:"monitor"`
+	// Logging LoggingConfig    `yaml:"logging"`
 }
 
 type LoggingConfig struct {
