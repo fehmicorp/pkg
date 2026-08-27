@@ -1,4 +1,4 @@
-package gateway_config
+package gwconfig
 
 type Config struct {
 	App     AppConfig        `yaml:"app"`
