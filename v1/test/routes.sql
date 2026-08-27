@@ -49,4 +49,4 @@ CREATE TABLE IF NOT EXISTS v1 (
   type TEXT DEFAULT 'rest' | 'grpc' | 'grpl' | 'redt' | 'soap' | 'webs' | 'webh'
 );
 
-/test/v1/rest/
+/v1/sso

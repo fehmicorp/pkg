@@ -1,3 +1,113 @@
 {
-  
+  "enabled":true,
+  "type":"rest",
+  "authentication": {
+    "enabled": true,
+    "type": "apikey",
+    "location": "header",
+    "keyName": "X-API-Key",
+    "allowedKeys": ["token_prod_001", "token_prod_002"]
+  },
+  "rateLimit": {
+    "enabled": true,
+    "requests": 100,
+    "duration": "1m",
+    "burst": 20,
+    "keyBy": "ip"
+  },
+  "cors": {
+    "enabled": true,
+    "origins": "*",
+    "methods": ["GET", "POST"],
+    "headers": "*",
+    "allowCredentials": true,
+    "maxAge": 86400
+  },
+  "request": {
+    "headers": {
+      "required": ["Authorization", "Content-Type"],
+      "defaults": {
+        "Content-Type": "application/json"
+      }
+    },
+    "params": {
+      "key": "customerId",
+      "required": true,
+      "type": "string",
+      "pattern": "^cust_[a-zA-Z0-9]{8,16}$"
+    },
+    "query": {
+      "fields": {
+        "required": false,
+        "type": "string",
+        "maxLength": 100
+      }
+    },
+    "body": {
+      "enabled": false,
+      "type": "json",
+      "strict": true,
+      "schema": {}
+    }
+  },
+  "backend": {
+    "type": "http",
+    "loadBalancer": {
+      "strategy": "round_robin",
+      "targets": [
+        "http://go-db-01:8081/query",
+        "http://go-db-02:8081/query"
+      ]
+    },
+    "method": "POST",
+    "timeout": "5s",
+    "keepAlive": true,
+    "retry": {
+      "enabled": true,
+      "attempts": 3,
+      "delay": "2s",
+      "backoffMultiplier": 2,
+      "retryOnStatuses": [502, 503, 504]
+    },
+    "circuitBreaker": {
+      "enabled": true,
+      "failureThreshold": 5,
+      "consecutiveErrors": 3,
+      "resetTimeout": "30s"
+    }
+  },
+  "response": {
+    "cache": {
+      "enabled": true,
+      "strategy": "redis",
+      "ttl": 300,
+      "cacheKey": "cache:route:v1:cust:{params.customerId}"
+    },
+    "headers": {
+      "set": {
+        "X-Gateway-Version": "v1.0.0",
+        "X-Response-Time": "{metric.latency}"
+      },
+      "remove": ["X-Powered-By", "Server"]
+    }
+  },
+  "observability": {
+    "logging": {
+      "enabled": true,
+      "logLevel": "info",
+      "logRequestHeaders": false,
+      "logRequestBody": false,
+      "logResponseBody": false
+    },
+    "audit": true,
+    "metrics": {
+      "enabled": true,
+      "prometheus": true
+    }
+  },
+  "metadata": {
+    "createdBy": "DevOps Team",
+    "createdAt": "2026-08-27T18:30:00Z",
+    "updatedAt": "2026-08-27T18:30:00Z"
+  }
 }
