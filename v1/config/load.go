@@ -1,4 +1,4 @@
-package gwconfig
+package config
 
 import (
 	"flag"

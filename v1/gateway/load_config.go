@@ -1,4 +1,4 @@
-package gwconfig
+package gateway
 
 import (
 	"flag"

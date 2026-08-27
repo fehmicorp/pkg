@@ -3,10 +3,11 @@ package http
 import (
 	"net/http"
 
+	"github.com/fehmicorp/pkg/v1/gateway"
 	"github.com/gin-gonic/gin"
 )
 
-func (s *Server) HealthHandler(
+func (s *gateway.Config) HealthHandler(
 	c *gin.Context,
 ) {
 	responseJSON(
@@ -14,9 +15,9 @@ func (s *Server) HealthHandler(
 		http.StatusOK,
 		gin.H{
 			"status":      true,
-			"service":     s.Config.App.Name,
-			"version":     s.Config.App.Version,
-			"environment": s.Config.App.Environment,
+			"service":     s.Name,
+			"version":     s.Version,
+			"environment": s.Environment,
 		},
 	)
 }
