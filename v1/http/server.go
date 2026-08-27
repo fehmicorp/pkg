@@ -10,7 +10,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func NewServer() *http.Server {
+func NewServer(prefixes ...string) *http.Server {
 	redisClient := RedisConnect()
 	if config.Conf.App.Environment == "production" {
 		gin.SetMode(gin.ReleaseMode)
@@ -23,15 +23,7 @@ func NewServer() *http.Server {
 			},
 		),
 	}
-	router := gin.New()
-	router.Use(
-		gin.Logger(),
-		gin.Recovery(),
-	)
-	router.GET(
-		"/health",
-		app.HealthHandler,
-	)
+	router := SetupRouter(app, prefixes...)
 	return &http.Server{
 		Addr: config.Conf.Server.Host +
 			":" +
