@@ -14,6 +14,9 @@ func Init() *Config {
 	var configPath string
 	configPath = os.Getenv("CONFIG_PATH")
 	if configPath == "" {
+		configPath = "./config.yaml"
+	}
+	if configPath == "" {
 		flags := flag.String("config", "", "path to the configuration file")
 		flag.Parse()
 		configPath = *flags

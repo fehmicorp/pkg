@@ -1,17 +1,22 @@
 package config
 
 import (
-	"github.com/fehmicorp/pkg/v1/gateway"
 	"github.com/fehmicorp/pkg/v1/http"
 	"github.com/fehmicorp/pkg/v1/redis"
 )
 
 type Config struct {
-	App    gateway.Config `yaml:"app"`
-	Server http.Config    `yaml:"server"`
-	Redis  redis.Config   `yaml:"redis"`
+	App    AppConfig    `yaml:"app"`
+	Server http.Config  `yaml:"server"`
+	Redis  redis.Config `yaml:"redis"`
 	// Monitor MonitoringConfig `yaml:"monitor"`
 	// Logging LoggingConfig    `yaml:"logging"`
+}
+
+type AppConfig struct {
+	Name        string `yaml:"name" env:"APP_NAME" env-default:"gateway"`
+	Version     string `yaml:"version" env:"APP_VERSION" env-default:"1.0.0"`
+	Environment string `yaml:"environment" env:"APP_ENV" env-default:"development"`
 }
 
 type LoggingConfig struct {
