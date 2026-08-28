@@ -1,56 +1,26 @@
 package config
 
 import (
-	"flag"
 	"log"
+	"log/slog"
 	"os"
+	"path/filepath"
 
 	"github.com/ilyakaznacheev/cleanenv"
 )
 
 var Conf *Config
 
-func Init() *Config {
+func Init() {
 	var configPath string
 	configPath = os.Getenv("CONFIG_PATH")
 	if configPath == "" {
-		configPath = "./config.yaml"
-	}
-	if configPath == "" {
-		flags := flag.String("config", "", "path to the configuration file")
-		flag.Parse()
-		configPath = *flags
-		if configPath == "" {
-			log.Fatal("Config path is not set")
-
+		workDir, err := os.Getwd()
+		if err != nil {
+			slog.Error("failed to get working directory", slog.String("error", err.Error()))
+			os.Exit(1)
 		}
-	}
-	if _, err := os.Stat(configPath); os.IsNotExist(err) {
-		log.Fatalf("config file does not exist: %s", configPath)
-	}
-	var cfg Config
-	err := cleanenv.ReadConfig(configPath, &cfg)
-	if err != nil {
-		log.Fatalf("can not read config file: %s", err.Error())
-	}
-	Conf = &cfg
-	return &cfg
-}
-
-func Load() {
-	var configPath string
-	configPath = os.Getenv("CONFIG_PATH")
-	if configPath == "" {
-		configPath = "./config.yaml"
-	}
-	if configPath == "" {
-		flags := flag.String("config", "", "path to the configuration file")
-		flag.Parse()
-		configPath = *flags
-		if configPath == "" {
-			log.Fatal("Config path is not set")
-
-		}
+		configPath = filepath.Join(workDir, "config.yaml")
 	}
 	if _, err := os.Stat(configPath); os.IsNotExist(err) {
 		log.Fatalf("config file does not exist: %s", configPath)

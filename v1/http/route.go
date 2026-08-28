@@ -63,7 +63,7 @@ func SetupRouter(app *Server, prefixes ...string) (r *gin.Engine) {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Not Found"})
 			return
 		}
-		app.RoutesHandler(c)
+		app.HealthHandler(c)
 	})
 	return router
 }

@@ -21,26 +21,29 @@ func StartServer(prefixes ...string) {
 	} else {
 		targetPrefix = os.Getenv("PREFIX")
 	}
+
 	server := httpHandler.NewServer(targetPrefix)
-	var activePrefix string
-	if len(prefixes) > 0 {
-		activePrefix = prefixes[0]
-	}
 
 	slog.Info(
 		"server started",
 		slog.String("address", server.Addr),
-		slog.String("prefix", activePrefix),
+		slog.String("prefix", targetPrefix),
 		slog.String("environment", config.Conf.App.Environment),
 	)
 
-	done := make(chan os.Signal, 1)
-	signal.Notify(
-		done,
-		os.Interrupt,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-	)
+	// Create context bound to OS interruption signals
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	// Connect to Cloudflare if token is available, otherwise run normally
+	if config.Conf.Server.CFTunnel != "" {
+		slog.Info("Cloudflare Tunnel token detected; initializing tunnel daemon")
+		if err := StartTunnelProcess(ctx, config.Conf.Server.CFTunnel); err != nil {
+			slog.Error("Failed to initiate Cloudflare tunnel", slog.String("error", err.Error()))
+		}
+	} else {
+		slog.Info("No Cloudflare Tunnel token configured; starting server normally")
+	}
 
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
@@ -52,16 +55,14 @@ func StartServer(prefixes ...string) {
 		}
 	}()
 
-	<-done
+	// Wait for termination signal
+	<-ctx.Done()
 	slog.Info("shutdown signal received")
 
-	ctx, cancel := context.WithTimeout(
-		context.Background(),
-		10*time.Second,
-	)
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
-	if err := server.Shutdown(ctx); err != nil {
+	if err := server.Shutdown(shutdownCtx); err != nil {
 		slog.Error(
 			"failed to shutdown server",
 			slog.String("error", err.Error()),

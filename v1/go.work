@@ -6,4 +6,6 @@ use (
 	./gateway
 	./http
 	./redis
+	./test_cli
+	./cf
 )

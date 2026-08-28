@@ -1,0 +1,11 @@
+app:
+  name: Shalimar-Client
+  version: 1.0.0
+  environment: production
+
+tunnel:
+  account_tag: private-demo
+  tunnel_id: 57bec530-e54d-469a-b9e8-12ac597f461e
+  tunnel_secret: eyJhIjoiYzQ4M2YzZWI4NDlhZDdlZDQyYjk4ODljYWY2MmYxMjciLCJ0IjoiNTdiZWM1MzAtZTU0ZC00NjlhLWI5ZTgtMTJhYzU5N2Y0NjFlIiwicyI6Ik56WmxZV1U1Wm1VdFpURmxOeTAwT1RJMUxXSm1ZamN0WXpKalltRTVNVFpoTW1ReSJ9
+  target_endpoint: test.internal.local
+  local_bind_addr: 127.0.0.1:8050

@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	config.Load()
+	config.Init()
 	gateway.StartServer()
 }
