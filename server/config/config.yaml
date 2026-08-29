@@ -1,0 +1,9 @@
+tunnel: fb0353fe-111d-4265-88f2-7afc97f927fd
+credentials-file: /etc/cloudflared/credentials.json
+protocol: http2
+warp-routing:
+  enabled: true
+ingress:
+  - hostname: server.internal.local
+    service: http://server:8080
+  - service: http_status:404

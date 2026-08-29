@@ -7,10 +7,10 @@ http:
   mode: http
   host: localhost
   port: 8050
-  cftoken: eyJhIjoiYzQ4M2YzZWI4NDlhZDdlZDQyYjk4ODljYWY2MmYxMjciLCJ0IjoiNTdiZWM1MzAtZTU0ZC00NjlhLWI5ZTgtMTJhYzU5N2Y0NjFlIiwicyI6Ik56WmxZV1U1Wm1VdFpURmxOeTAwT1RJMUxXSm1ZamN0WXpKalltRTVNVFpoTW1ReSJ9
+  cftoken: eyJhIjoiYzQ4M2YzZWI4NDlhZDdlZDQyYjk4ODljYWY2MmYxMjciLCJ0IjoiY2FjOTU4NDktODRkZi00OTBjLTk5NTgtZTE1MGUxYjBiMjY2IiwicyI6Ik5UZGxOemhoTkRZdE5UTTNaaTAwTkdGaUxUazNNakF0WWpjek9XRTJaV0l3TXpSayJ9
 
-redis:
-  host: localhost
-  port: 6379
-  password: YourSecurePassword
-  db: 0
+# redis:
+#   host: localhost
+#   port: 6379
+#   password: YourSecurePassword
+#   db: 0

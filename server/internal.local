@@ -1,0 +1,15 @@
+internal.local:53 {
+    log
+    errors
+    hosts {
+        172.18.2 server.internal.local
+        fallthrough
+    }
+}
+
+.:53 {
+    log
+    errors
+    forward . 1.1.1.1 8.8.8.8
+    cache 30
+}

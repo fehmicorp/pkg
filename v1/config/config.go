@@ -6,8 +6,8 @@ import (
 
 type Config struct {
 	App    AppConfig    `yaml:"app" json:"app"`
-	Server HttpConfig   `yaml:"http" json:"http"`
-	Redis  redis.Config `yaml:"redis" json:"redis"`
+	Server HttpConfig   `yaml:"http:omitempty" json:"http:omitempty"`
+	Redis  redis.Config `yaml:"redis:omitempty" json:"redis:omitempty"`
 }
 
 type AppConfig struct {

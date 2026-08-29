@@ -1,0 +1,18 @@
+FROM golang:1.26.4-alpine AS builder
+WORKDIR /app
+COPY go.mod ./
+RUN go mod tidy
+COPY main.go .
+RUN go build -o server main.go
+# FROM cloudflare/cloudflared:latest AS cloudflared
+FROM alpine:latest
+WORKDIR /app
+# RUN apk add --no-cache ca-certificates
+COPY --from=builder /app/server .
+# COPY ./entrypoint.sh .
+# RUN chmod +x /app/entrypoint.sh
+# COPY --from=cloudflared /usr/local/bin/cloudflared /usr/local/bin/cloudflared
+# COPY ./cf /etc/cloudflared
+EXPOSE 8080
+# ENTRYPOINT ["/app/entrypoint.sh"]
+CMD [ "./server" ]

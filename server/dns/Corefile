@@ -1,0 +1,20 @@
+# Internal domain configuration
+internal.local:53 {
+    log
+    errors
+    hosts {
+        # Define your custom internal host IP mappings here
+        10.0.0.50 server.internal.local
+        10.0.0.51 app.internal.local
+        10.0.0.52 db.internal.local
+        fallthrough
+    }
+}
+
+# Catch-all for all other DNS queries (Forward to public DNS)
+.:53 {
+    log
+    errors
+    forward . 1.1.1.1 8.8.8.8
+    cache 30
+}
