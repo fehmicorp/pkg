@@ -116,24 +116,43 @@ func installMacOS(ctx context.Context) error {
 	return nil
 }
 
-// Linux Installation: Uses package manager (apt/dnf) or direct binary fetch to /usr/local/bin
+// Linux Installation: Automatically detects if sudo is present (host vs root containers)
 func installLinux(ctx context.Context) error {
 	arch := "amd64"
 	if runtime.GOARCH == "arm64" {
 		arch = "arm64"
 	}
 
-	// Direct download to /usr/local/bin
 	targetURL := fmt.Sprintf("https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-%s", arch)
 
-	downloadCmd := exec.CommandContext(ctx, "sudo", "curl", "-L", targetURL, "-o", "/usr/local/bin/cloudflared")
+	// Check if sudo exists in $PATH
+	useSudo := false
+	if _, err := exec.LookPath("sudo"); err == nil && os.Geteuid() != 0 {
+		useSudo = true
+	}
+
+	// Prepare curl command
+	var downloadCmd *exec.Cmd
+	if useSudo {
+		downloadCmd = exec.CommandContext(ctx, "sudo", "curl", "-L", targetURL, "-o", "/usr/local/bin/cloudflared")
+	} else {
+		downloadCmd = exec.CommandContext(ctx, "curl", "-L", targetURL, "-o", "/usr/local/bin/cloudflared")
+	}
+
 	downloadCmd.Stdout = os.Stdout
 	downloadCmd.Stderr = os.Stderr
 	if err := downloadCmd.Run(); err != nil {
 		return fmt.Errorf("failed to download cloudflared binary on Linux: %w", err)
 	}
 
-	chmodCmd := exec.CommandContext(ctx, "sudo", "chmod", "+x", "/usr/local/bin/cloudflared")
+	// Prepare chmod command
+	var chmodCmd *exec.Cmd
+	if useSudo {
+		chmodCmd = exec.CommandContext(ctx, "sudo", "chmod", "+x", "/usr/local/bin/cloudflared")
+	} else {
+		chmodCmd = exec.CommandContext(ctx, "chmod", "+x", "/usr/local/bin/cloudflared")
+	}
+
 	if err := chmodCmd.Run(); err != nil {
 		return fmt.Errorf("failed to set execution permissions on /usr/local/bin/cloudflared: %w", err)
 	}

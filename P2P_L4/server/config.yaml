@@ -1,0 +1,19 @@
+app:
+  name: tunnel-edege
+  version: 1.0.0
+  environment: production
+
+tcp:
+  mode: tunnel
+  netpool: 10.8.0.0/24
+  gateway: 10.8.0.1
+  port: 8443
+  cftoken: eyJhIjoiYzQ4M2YzZWI4NDlhZDdlZDQyYjk4ODljYWY2MmYxMjciLCJ0IjoiYWEzNGJhYzMtOThhMC00OTk2LWIyYmUtYWVjM2MwMjZjZTRjIiwicyI6Ik1qQTRObU0xTldZdE9HRTNNUzAwTWpVNExUZ3lNakV0Wmpnd1lXUXlNak0xTnpZNCJ9
+
+dns:
+  ip: 10.8.0.1
+  server: 192.168.2.99
+  zones:
+    - sap.shalimarcorp.org
+    - sin.sap.shalimarcorp.org
+  refresh: 60

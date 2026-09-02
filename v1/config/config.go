@@ -7,7 +7,15 @@ import (
 type Config struct {
 	App    AppConfig    `yaml:"app" json:"app"`
 	Server HttpConfig   `yaml:"http:omitempty" json:"http:omitempty"`
+	TCP    TCPConfig    `yaml:"tcp:omitempty" json:"tcp:omitempty"`
 	Redis  redis.Config `yaml:"redis:omitempty" json:"redis:omitempty"`
+}
+
+type TCPConfig struct {
+	Mode        string `yaml:"mode" env:"TCP_MODE" env-default:"tunnel" json:"mode"`
+	NetworkPool string `yaml:"netpool" env:"TCP_NETPOOL" env-default:"10.8.0.0/24" json:"netpool"`
+	Port        int    `yaml:"port" env:"TCP_PORT" env-default:"8443" json:"port"`
+	CFTunnel    string `yaml:"cftoken,omitempty" env:"CF_TUNNEL_TOKEN" json:"cftoken,omitempty"`
 }
 
 type AppConfig struct {
