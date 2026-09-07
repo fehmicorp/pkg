@@ -1,9 +1,11 @@
 package tray
 
 import (
+	"errors"
 	"log"
 	"os/exec"
 	"runtime"
+	"strings"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -12,16 +14,43 @@ type MenuOptions struct {
 	Title  string
 	Type   string // "web" or "browser"
 	Target string // URL or route path
+	Func   func()
+}
+
+func (m MenuOptions) Validate() error {
+	m.Type = strings.ToLower(m.Type)
+	if m.Target == "" && m.Func == nil {
+		return errors.New("menu option requires either a Target or a Func")
+	}
+	if m.Type != "web" && m.Type != "browser" {
+		return errors.New("invalid type: must be 'web' or 'browser'")
+	}
+
+	return nil
 }
 
 func PrepareMenuItems(app *application.App, menu []MenuOptions) []MenuItemConfig {
 	var items []MenuItemConfig
-	for _, option := range menu {
-		opt := option // Capture loop variable
-		items = append(items, MenuItemConfig{
-			Title:   opt.Title,
-			OnClick: getFuncForMenu(app, opt),
-		})
+	for _, opt := range menu {
+		if err := opt.Validate(); err != nil {
+			return nil
+		}
+		switch strings.ToLower(opt.Type) {
+		case "web", "browser":
+			items = append(items, MenuItemConfig{
+				Title:   opt.Title,
+				OnClick: getFuncForMenu(app, opt),
+			})
+		default:
+			items = append(items, MenuItemConfig{
+				Title: opt.Title,
+				OnClick: func(ctx *application.Context) {
+					if opt.Func != nil {
+						opt.Func()
+					}
+				},
+			})
+		}
 	}
 	return items
 }
