@@ -22,7 +22,7 @@ export default function FehmiAgentInstaller() {
         <div className="flex flex-1 overflow-hidden">
           <Sidebar step={installer.step} />
 
-          <div className="flex flex-1 flex-col justify-between p-8 bg-slate-900/60">
+          <div className="flex flex-1 flex-col justify-between bg-slate-900/60">
             {installer.step === "welcome" && <StepWelcome />}
             {installer.step === "tos" && (
               <StepTos

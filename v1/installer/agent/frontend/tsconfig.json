@@ -18,10 +18,20 @@
     "resolveJsonModule": true,
     "isolatedModules": true,
     "noEmit": true,
-    "jsx": "react-jsx"
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "paths": {
+      "@/*": [
+        "src/*"
+      ],
+      "@wailsjs/*": [
+        "wailsjs/*"
+      ]
+    }
   },
   "include": [
-    "src"
+    "src",
+    "wailsjs"
   ],
   "references": [
     {

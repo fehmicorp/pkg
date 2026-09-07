@@ -3,8 +3,6 @@ package main
 import (
 	"os"
 	"runtime"
-
-	"github.com/fehmicorp/pkg/v1/utils/os/win"
 )
 
 var Target = struct {
@@ -21,15 +19,29 @@ type AppConfig struct {
 	AppName         string
 	Description     string
 	Icon            string
+	Tagline         string
+	Title           string
+	Width           int
+	Height          int
+	Min             bool
+	Max             bool
+	Quit            bool
 	Version         string
 	Domain          string
 	InstallationDir string `json:"installDir"`
 }
 
 var Conf = AppConfig{
-	AppName:         "Fehmi Agent Installer",
+	AppName:         "SEPRA",
 	Description:     "Fehmi Agent Installer is a web-based application that allows users to easily install and manage Fehmi agents on their systems. It provides a user-friendly interface for configuring and deploying agents, making it simple for users to monitor and control their cloud infrastructure.",
 	Icon:            "assets/logo.png",
+	Tagline:         "Endpoint Security Installer",
+	Title:           "Fehmi Corporation",
+	Width:           850,
+	Height:          600,
+	Min:             true,
+	Max:             false,
+	Quit:            false,
 	Version:         "v1.0.1",
 	Domain:          "fehmicorp.in",
 	InstallationDir: `%ProgramFiles%\fehmi\agent`,
@@ -47,7 +59,7 @@ type SystemService struct{}
 
 func (s *SystemService) GetSystemInfo() SystemPayload {
 	Target.Hostname, _ = os.Hostname()
-	isAdmin := win.IsAdmin()
+	isAdmin := true
 	return SystemPayload{
 		TargetOS:   Target.OS,
 		TargetArch: Target.Arch,

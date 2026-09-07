@@ -1,12 +1,12 @@
 go 1.26.4
 
 use (
-	./installer/agent
 	./cf
 	./config
 	./dns
 	./gateway
 	./http
+	./installer/agent
 	./redis
 	./ssltun
 	./test
