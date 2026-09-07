@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"p2pl4/server/ipam"
@@ -18,9 +19,10 @@ var (
 	clients   = make(map[string]net.Conn)
 	clientsMu sync.RWMutex
 	gatewayIP string
+	routes    []string
 )
 
-func SetupTunnel(pool *ipam.Pool, listenPort string, gwIp string) {
+func SetupTunnel(pool *ipam.Pool, listenPort string, gwIp string, routePool []string) {
 	cfg := water.Config{
 		DeviceType: water.TUN,
 	}
@@ -31,16 +33,16 @@ func SetupTunnel(pool *ipam.Pool, listenPort string, gwIp string) {
 	}
 	log.Printf("[SERVER] TUN Interface Created: %s", iface.Name())
 
-	// Allocate the first IP (10.8.0.1) from IPAM to reserve it for the Gateway/DNS
+	// Reserve Gateway IP
 	reservedIP, err := pool.Allocate()
 	if err != nil {
-		log.Printf("[IPAM WARN] Failed to allocate gateway IP from pool: %v", err)
+		log.Printf("[IPAM WARN] Failed to allocate gateway IP: %v", err)
 	} else {
 		log.Printf("[IPAM] Allocated Gateway/DNS IP: %s", reservedIP)
 	}
 
-	// Configure server TUN interface with Gateway IP (e.g., 10.8.0.1/24)
 	gatewayIP = gwIp
+	routes = routePool
 	cidrMask := pool.GetCIDRMask()
 	gatewayCIDR := fmt.Sprintf("%s/%d", gatewayIP, cidrMask)
 
@@ -53,7 +55,6 @@ func SetupTunnel(pool *ipam.Pool, listenPort string, gwIp string) {
 
 	log.Printf("[SERVER] Configured TUN interface with Gateway IP %s", gatewayCIDR)
 
-	// Start packet reader loop: TUN -> Client Routing Table
 	go handleTUNToClients(iface)
 
 	listener, err := net.Listen("tcp", listenPort)
@@ -77,7 +78,6 @@ func SetupTunnel(pool *ipam.Pool, listenPort string, gwIp string) {
 func handleClient(conn net.Conn, iface *water.Interface, pool *ipam.Pool) {
 	defer conn.Close()
 
-	// 1. Allocate dynamic IP for the connected client (will start from 10.8.0.2)
 	assignedIP, err := pool.Allocate()
 	if err != nil {
 		log.Printf("[SERVER ERR] Dynamic IP allocation failed for %s: %v", conn.RemoteAddr(), err)
@@ -85,23 +85,23 @@ func handleClient(conn net.Conn, iface *water.Interface, pool *ipam.Pool) {
 	}
 	defer pool.Release(assignedIP)
 
-	log.Printf("[SERVER] Assigned Dynamic IP %s to client %s", assignedIP, conn.RemoteAddr())
-
-	// 2. Register active connection in routing table
 	registerClient(assignedIP, conn)
 	defer unregisterClient(assignedIP)
 
-	// 3. Send Handshake Config frame containing IP, Netmask, Gateway, and DNS to Client
-	dnsIP := gatewayIP // DNS replica runs locally on Gateway IP (10.8.0.1)
-	configMsg := fmt.Sprintf("CONFIG|IP:%s|NETMASK:%s|GATEWAY:%s|DNS:%s", assignedIP, pool.GetNetmask(), gatewayIP, dnsIP)
+	dnsIP := gatewayIP
+	routeStr := strings.Join(routes, ",") // e.g., "10.10.10.0/24,192.168.2.0/23"
+
+	// 3. Send Handshake Config containing IP, Netmask, Gateway, DNS, and ROUTES
+	configMsg := fmt.Sprintf("CONFIG|IP:%s|NETMASK:%s|GATEWAY:%s|DNS:%s|ROUTES:%s",
+		assignedIP, pool.GetNetmask(), gatewayIP, dnsIP, routeStr)
 
 	if err := writeFrame(conn, []byte(configMsg)); err != nil {
 		log.Printf("[SERVER ERR] Failed to send CONFIG handshake to %s: %v", assignedIP, err)
 		return
 	}
 
-	log.Printf("[SERVER] Handshake sent to %s -> IP: %s | GW: %s | DNS: %s",
-		conn.RemoteAddr(), assignedIP, gatewayIP, dnsIP)
+	log.Printf("[SERVER] Handshake sent to %s -> IP: %s | GW: %s | DNS: %s | ROUTES: %s",
+		conn.RemoteAddr(), assignedIP, gatewayIP, dnsIP, routeStr)
 
 	// 4. Client -> TUN Read Loop
 	for {
@@ -111,14 +111,12 @@ func handleClient(conn net.Conn, iface *water.Interface, pool *ipam.Pool) {
 			return
 		}
 
-		// Write packet directly to TUN interface for processing/routing
 		if _, err := iface.Write(packet); err != nil {
 			log.Printf("[SERVER ERR] Error writing packet to TUN interface: %v", err)
 		}
 	}
 }
 
-// Reads IP packets from TUN interface and dispatches them to the targeted client connection
 func handleTUNToClients(iface *water.Interface) {
 	buf := make([]byte, 2048)
 	for {
@@ -130,15 +128,12 @@ func handleTUNToClients(iface *water.Interface) {
 
 		packet := buf[:n]
 
-		// Ensure it's an IPv4 packet (version field in IP header == 4)
 		if n < 20 || (packet[0]>>4) != 4 {
 			continue
 		}
 
-		// Extract destination IP from IPv4 header (bytes 16-19)
 		destIP := net.IP(packet[16:20]).String()
 
-		// Route packet to specific client connection
 		clientsMu.RLock()
 		clientConn, exists := clients[destIP]
 		clientsMu.RUnlock()
@@ -151,7 +146,6 @@ func handleTUNToClients(iface *water.Interface) {
 	}
 }
 
-// Helper methods for managing client routing table
 func registerClient(ip string, conn net.Conn) {
 	clientsMu.Lock()
 	defer clientsMu.Unlock()
@@ -164,7 +158,6 @@ func unregisterClient(ip string) {
 	delete(clients, ip)
 }
 
-// Framing Helpers
 func writeFrame(w io.Writer, payload []byte) error {
 	length := uint16(len(payload))
 	if err := binary.Write(w, binary.BigEndian, length); err != nil {

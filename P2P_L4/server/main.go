@@ -24,7 +24,6 @@ func main() {
 	defer cancel()
 
 	serverIP := conf.DNS.IP
-	GatewayIp := conf.TCP.Gateway
 	if conf.TCP.Mode == "tunnel" {
 		cidr := conf.TCP.NetworkPool // "10.8.0.0/24"
 		port := fmt.Sprintf(":%d", conf.TCP.Port)
@@ -35,7 +34,7 @@ func main() {
 		}
 
 		// 1. Initialize TUN interface and set IP 10.8.0.1/24
-		go ssltun.SetupTunnel(pool, port, GatewayIp)
+		go ssltun.SetupTunnel(pool, port, conf.TCP.Gateway, conf.TCP.Route)
 
 		// 2. Start Cloudflare Tunnel Daemon
 		token := conf.TCP.CFTunnel

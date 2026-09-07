@@ -7,6 +7,10 @@ tcp:
   mode: tunnel
   netpool: 10.8.0.0/24
   gateway: 10.8.0.1
+  route_pool:
+   - 10.10.10.0/24
+   - 192.168.2.0/23
+   - 10.10.108.0/22
   port: 8443
   cftoken: eyJhIjoiYzQ4M2YzZWI4NDlhZDdlZDQyYjk4ODljYWY2MmYxMjciLCJ0IjoiYWEzNGJhYzMtOThhMC00OTk2LWIyYmUtYWVjM2MwMjZjZTRjIiwicyI6Ik1qQTRObU0xTldZdE9HRTNNUzAwTWpVNExUZ3lNakV0Wmpnd1lXUXlNak0xTnpZNCJ9
 

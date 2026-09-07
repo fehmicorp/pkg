@@ -23,15 +23,14 @@ type AppConfig struct {
 	Version     string `yaml:"version" env:"APP_VERSION" env-default:"1.0.0" json:"version"`
 	Environment string `yaml:"environment" env:"APP_ENV" env-default:"development" json:"environment"`
 }
-
 type TCPConfig struct {
-	Mode        string `yaml:"mode" env:"TCP_MODE" env-default:"tunnel" json:"mode"`
-	NetworkPool string `yaml:"netpool" env:"TCP_NETPOOL" env-default:"10.8.0.0/24" json:"netpool"`
-	Gateway     string `yaml:"gateway" env:"TCP_GATEWAY" env-default:"10.8.0.1" json:"gateway"`
-	Port        int    `yaml:"port" env:"TCP_PORT" env-default:"8443" json:"port"`
-	CFTunnel    string `yaml:"cftoken,omitempty" env:"CF_TUNNEL_TOKEN" json:"cftoken,omitempty"`
+	Mode        string   `yaml:"mode" env:"TCP_MODE" env-default:"tunnel" json:"mode"`
+	NetworkPool string   `yaml:"netpool" env:"TCP_NETPOOL" env-default:"10.8.0.0/24" json:"netpool"`
+	Gateway     string   `yaml:"gateway" env:"TCP_GATEWAY" env-default:"10.8.0.1" json:"gateway"`
+	Route       []string `yaml:"route_pool,omitempty" env:"TCP_ROUTE_POOL" json:"route_pool,omitempty"`
+	Port        int      `yaml:"port" env:"TCP_PORT" env-default:"8443" json:"port"`
+	CFTunnel    string   `yaml:"cftoken,omitempty" env:"CF_TUNNEL_TOKEN" json:"cftoken,omitempty"`
 }
-
 type DNSConfig struct {
 	IP      string   `yaml:"ip" json:"ip"`
 	Server  string   `yaml:"server" json:"server"`

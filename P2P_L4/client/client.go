@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/url"
 	"os"
 	"os/exec"
@@ -25,6 +26,7 @@ type Config struct {
 	Netmask string
 	Gateway string
 	DNS     string
+	Routes  []string
 }
 
 func runTunnel(ctx context.Context) {
@@ -78,16 +80,17 @@ func runWindowsClient(ctx context.Context) {
 		log.Fatalf("[CLIENT ERR] Failed IP configuration handshake: %v", err)
 	}
 
-	log.Printf("[CLIENT] Received Config: IP=%s | Mask=%s | GW=%s | DNS=%s",
-		cfg.IP, cfg.Netmask, cfg.Gateway, cfg.DNS)
+	log.Printf("[CLIENT] Received Config: IP=%s | Mask=%s | GW=%s | DNS=%s | Routes=%v",
+		cfg.IP, cfg.Netmask, cfg.Gateway, cfg.DNS, cfg.Routes)
 
-	// 5. Apply assigned IP address, Gateway, and DNS via netsh
+	// 5. Apply assigned IP address and DNS via netsh
+	// Note: We do NOT set default gateway via netsh to maintain local internet breakout!
 	cmdIP := exec.Command("netsh", "interface", "ipv4", "set", "address",
-		"name=P2PTunnel", "static", cfg.IP, cfg.Netmask, cfg.Gateway)
+		"name=P2PTunnel", "static", cfg.IP, cfg.Netmask)
 	if err := cmdIP.Run(); err != nil {
-		log.Printf("[CLIENT WARN] Failed to set interface IP/Gateway via netsh: %v", err)
+		log.Printf("[CLIENT WARN] Failed to set interface IP via netsh: %v", err)
 	} else {
-		log.Printf("[CLIENT] Network adapter configured with IP: %s, GW: %s", cfg.IP, cfg.Gateway)
+		log.Printf("[CLIENT] Network adapter configured with IP: %s", cfg.IP)
 	}
 
 	cmdDNS := exec.Command("netsh", "interface", "ipv4", "set", "dnsservers",
@@ -98,10 +101,11 @@ func runWindowsClient(ctx context.Context) {
 		log.Printf("[CLIENT] Network adapter configured with DNS: %s", cfg.DNS)
 	}
 
-	// 6. Configure Split-DNS (NRPT) for .shalimarcorp.org
+	// 6. Configure Target Split-Routes and Split-DNS (NRPT)
+	setupRoutes(cfg.Routes, cfg.Gateway)
 	setupSplitDNS(cfg.DNS)
 
-	// 7. WebSocket Heartbeat Loop (Prevents Cloudflare 1006 connection drops)
+	// 7. WebSocket Heartbeat Loop
 	go func() {
 		ticker := time.NewTicker(25 * time.Second)
 		defer ticker.Stop()
@@ -170,11 +174,12 @@ func runWindowsClient(ctx context.Context) {
 
 	<-ctx.Done()
 	log.Println("[CLIENT] Shutting down client...")
+	cleanupRoutes(cfg.Routes)
 	cleanupSplitDNS()
 }
 
 // -----------------------------------------------------------------------------
-// Handshake & Dependency Helpers
+// Handshake, Route & DNS Helpers
 // -----------------------------------------------------------------------------
 
 func performHandshake(conn *websocket.Conn) (*Config, error) {
@@ -213,6 +218,10 @@ func performHandshake(conn *websocket.Conn) (*Config, error) {
 			cfg.Gateway = kv[1]
 		case "DNS":
 			cfg.DNS = kv[1]
+		case "ROUTES":
+			if kv[1] != "" {
+				cfg.Routes = strings.Split(kv[1], ",")
+			}
 		}
 	}
 
@@ -221,6 +230,51 @@ func performHandshake(conn *websocket.Conn) (*Config, error) {
 	}
 
 	return cfg, nil
+}
+
+func setupRoutes(routes []string, gateway string) {
+	for _, cidr := range routes {
+		cidr = strings.TrimSpace(cidr)
+		if cidr == "" {
+			continue
+		}
+
+		ip, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			log.Printf("[CLIENT WARN] Invalid route format %s: %v", cidr, err)
+			continue
+		}
+
+		mask := net.IP(ipNet.Mask).String()
+		networkIP := ip.Mask(ipNet.Mask).String()
+
+		// Delete existing static route if present to prevent errors
+		_ = exec.Command("route", "delete", networkIP).Run()
+
+		// Add route via gateway over P2PTunnel
+		cmd := exec.Command("route", "add", networkIP, "mask", mask, gateway)
+		if err := cmd.Run(); err != nil {
+			log.Printf("[CLIENT WARN] Failed to add route %s via %s: %v", cidr, gateway, err)
+		} else {
+			log.Printf("[CLIENT] Route added: %s mask %s -> %s", networkIP, mask, gateway)
+		}
+	}
+}
+
+func cleanupRoutes(routes []string) {
+	for _, cidr := range routes {
+		cidr = strings.TrimSpace(cidr)
+		if cidr == "" {
+			continue
+		}
+		ip, ipNet, err := net.ParseCIDR(cidr)
+		if err != nil {
+			continue
+		}
+		networkIP := ip.Mask(ipNet.Mask).String()
+		_ = exec.Command("route", "delete", networkIP).Run()
+		log.Printf("[CLIENT] Route deleted: %s", networkIP)
+	}
 }
 
 func setupSplitDNS(dnsIP string) {
@@ -282,15 +336,10 @@ func ensureWintunDLL() error {
 	return nil
 }
 
-// -----------------------------------------------------------------------------
-// Linux/macOS Fallback
-// -----------------------------------------------------------------------------
-
 func runLinuxClient(ctx context.Context) {
 	log.Println("[CLIENT] Linux/macOS execution mode engaged")
 }
 
-// Framing Helpers
 func wrapFrame(payload []byte) []byte {
 	length := uint16(len(payload))
 	frame := make([]byte, 2+len(payload))

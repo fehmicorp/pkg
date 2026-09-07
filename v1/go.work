@@ -1,12 +1,13 @@
 go 1.26.4
 
 use (
-	./test
+	./cf
 	./config
+	./dns
 	./gateway
 	./http
 	./redis
-	./test_cli
-	./cf
+	./ssltun
+	./test
 	./utils
 )

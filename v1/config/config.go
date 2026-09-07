@@ -7,16 +7,11 @@ import (
 type Config struct {
 	App    AppConfig    `yaml:"app" json:"app"`
 	Server HttpConfig   `yaml:"http:omitempty" json:"http:omitempty"`
-	TCP    TCPConfig    `yaml:"tcp:omitempty" json:"tcp:omitempty"`
+	TCP SSLTunConfig `yaml:"tcp,omitempty" json:"tcp,omitempty"`
+	DNS DNSConfig `yaml:"dns,omitempty" json:"dns,omitempty"`
 	Redis  redis.Config `yaml:"redis:omitempty" json:"redis:omitempty"`
 }
 
-type TCPConfig struct {
-	Mode        string `yaml:"mode" env:"TCP_MODE" env-default:"tunnel" json:"mode"`
-	NetworkPool string `yaml:"netpool" env:"TCP_NETPOOL" env-default:"10.8.0.0/24" json:"netpool"`
-	Port        int    `yaml:"port" env:"TCP_PORT" env-default:"8443" json:"port"`
-	CFTunnel    string `yaml:"cftoken,omitempty" env:"CF_TUNNEL_TOKEN" json:"cftoken,omitempty"`
-}
 
 type AppConfig struct {
 	Name        string `yaml:"name" env:"APP_NAME" env-default:"gateway" json:"name"`
@@ -32,6 +27,21 @@ type HttpConfig struct {
 	FQDN            string `yaml:"fqdn" env:"SERVER_FQDN" env-default:"https://api.fehmicorp.in/" json:"fqdn"`
 	ReadTimeoutSec  int    `yaml:"read_timeout" env:"SERVER_READ_TIMEOUT" env-default:"10" json:"read_timeout"`
 	WriteTimeoutSec int    `yaml:"write_timeout" env:"SERVER_WRITE_TIMEOUT" env-default:"10" json:"write_timeout"`
+}
+
+type SSLTunConfig struct {
+	Mode        string   `yaml:"mode" env:"TCP_MODE" env-default:"tunnel" json:"mode"`
+	NetworkPool string   `yaml:"netpool" env:"TCP_NETPOOL" env-default:"10.8.0.0/24" json:"netpool"`
+	Gateway     string   `yaml:"gateway" env:"TCP_GATEWAY" env-default:"10.8.0.1" json:"gateway"`
+	Route       []string `yaml:"route_pool,omitempty" env:"TCP_ROUTE_POOL" json:"route_pool,omitempty"`
+	Port        int      `yaml:"port" env:"TCP_PORT" env-default:"8443" json:"port"`
+	CFTunnel    string   `yaml:"cftoken,omitempty" env:"CF_TUNNEL_TOKEN" json:"cftoken,omitempty"`
+}
+type DNSConfig struct {
+	IP      string   `yaml:"ip" json:"ip"`
+	Server  string   `yaml:"server" json:"server"`
+	Zones   []string `yaml:"zones" json:"zones"`
+	Refresh int      `yaml:"refresh" json:"refresh"`
 }
 
 type LoggingConfig struct {
