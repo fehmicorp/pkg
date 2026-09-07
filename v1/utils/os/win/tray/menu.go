@@ -1,11 +1,10 @@
 package tray
 
 import (
-	"errors"
+	"fmt"
 	"log"
 	"os/exec"
 	"runtime"
-	"strings"
 
 	"github.com/wailsapp/wails/v3/pkg/application"
 )
@@ -14,43 +13,15 @@ type MenuOptions struct {
 	Title  string
 	Type   string // "web" or "browser"
 	Target string // URL or route path
-	Func   func()
-}
-
-func (m MenuOptions) Validate() error {
-	m.Type = strings.ToLower(m.Type)
-	if m.Target == "" && m.Func == nil {
-		return errors.New("menu option requires either a Target or a Func")
-	}
-	if m.Type != "web" && m.Type != "browser" {
-		return errors.New("invalid type: must be 'web' or 'browser'")
-	}
-
-	return nil
 }
 
 func PrepareMenuItems(app *application.App, menu []MenuOptions) []MenuItemConfig {
 	var items []MenuItemConfig
 	for _, opt := range menu {
-		if err := opt.Validate(); err != nil {
-			return nil
-		}
-		switch strings.ToLower(opt.Type) {
-		case "web", "browser":
-			items = append(items, MenuItemConfig{
-				Title:   opt.Title,
-				OnClick: getFuncForMenu(app, opt),
-			})
-		default:
-			items = append(items, MenuItemConfig{
-				Title: opt.Title,
-				OnClick: func(ctx *application.Context) {
-					if opt.Func != nil {
-						opt.Func()
-					}
-				},
-			})
-		}
+		items = append(items, MenuItemConfig{
+			Title:   opt.Title,
+			OnClick: getFuncForMenu(app, opt),
+		})
 	}
 	return items
 }
@@ -65,9 +36,21 @@ func getFuncForMenu(app *application.App, option MenuOptions) func(ctx *applicat
 		return func(ctx *application.Context) {
 			OpenBrowser(option.Target)
 		}
+	case "openapp":
+		return func(ctx *application.Context) {
+			OpenApp(option.Target)
+		}
 	default:
 		return nil
 	}
+}
+
+func OpenApp(targetExe string) error {
+	cmd := exec.Command(targetExe)
+	if err := cmd.Start(); err != nil {
+		return fmt.Errorf("failed to launch %s: %w", targetExe, err)
+	}
+	return nil
 }
 
 func OpenBrowser(url string) {
