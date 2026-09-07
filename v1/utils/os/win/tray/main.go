@@ -14,7 +14,7 @@ func RunMenu(
 	Quit bool,
 	onLeftClick func(),
 	onRightClick func(),
-) (*TrayManager, error) {
+) (*application.SystemTray, error) {
 	var conf = TrayConfig{
 		IconData:     TrayIcon,
 		Tooltip:      Tooltip,
@@ -27,5 +27,5 @@ func RunMenu(
 	if err := app.Run(); err != nil {
 		return nil, fmt.Errorf("❌ System tray service failed: %v", err)
 	}
-	return systray, nil
+	return systray.Tray, nil
 }
