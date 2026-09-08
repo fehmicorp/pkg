@@ -45,8 +45,8 @@ func getFuncForMenu(app *application.App, option MenuOptions) func(ctx *applicat
 	}
 }
 
-func OpenApp(targetExe string) error {
-	cmd := exec.Command(targetExe)
+func OpenApp(targetExe string, args ...string) error {
+	cmd := exec.Command(targetExe, args...)
 	if err := cmd.Start(); err != nil {
 		return fmt.Errorf("failed to launch %s: %w", targetExe, err)
 	}
